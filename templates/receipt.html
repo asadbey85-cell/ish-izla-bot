@@ -1,0 +1,45 @@
+﻿<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ish izla bot · Chek</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="receipt-shell">
+    <div class="receipt-header">
+      <div>
+        <p class="eyebrow">ISH IZLA BOT / DOSK</p>
+        <h1>Chek</h1>
+      </div>
+    </div>
+
+    {% for item in receipt['items'] %}
+      <div class="receipt-row">
+        <div>
+          <strong>{{ item['name'] }}</strong>
+          <small>{{ item['quantity'] }} dona</small>
+        </div>
+        <span>{{ item['line_total'] }} soвЂm</span>
+      </div>
+    {% endfor %}
+
+    <div class="receipt-row">
+      <span>ToвЂlangan</span>
+      <strong>{{ receipt['payment_amount'] }} soвЂm</strong>
+    </div>
+
+    <div class="receipt-total">
+      <span>Qaytim</span>
+      <span>{{ receipt['change'] }} soвЂm</span>
+    </div>
+
+    <div class="receipt-actions">
+      <button class="button dark" onclick="window.print()">Chop etish</button>
+    </div>
+  </main>
+</body>
+</html>
+
+

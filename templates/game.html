@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111b23">
+  <title>Tungi navbatchi · Shahar o‘yini</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='game.css') }}">
+  <script defer src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+  <script defer src="{{ url_for('static', filename='game.js') }}"></script>
+</head>
+<body>
+  <main class="game-page">
+    <header class="game-topbar">
+      <a class="game-brand" href="{{ url_for('usta') }}"><span class="brand-seal">N</span><span>TUNGI NAVBATCHI</span></a>
+      <span class="game-edition">SHAHAR / 02:17 AM</span>
+      <a class="back-link" href="{{ url_for('usta') }}">← Saytga qaytish</a>
+    </header>
+
+    <section class="game-heading">
+      <div><p class="game-kicker">TOSHKENT / TUNGI PATRUL</p><h1>Shahar seni kutmoqda.</h1></div>
+      <p class="game-copy">Tomlar orasida uch, energiya belgilarini yig‘ va dronlarga yo‘l berma.</p>
+    </section>
+
+    <section class="game-console" aria-label="Tungi navbatchi o‘yini">
+      <div class="game-status">
+        <div class="status-group"><span class="status-label">ENERGIYA</span><strong id="score-value">00</strong></div>
+        <div class="status-group"><span class="status-label">MASOFA</span><strong><span id="distance-value">000</span><small> M</small></strong></div>
+        <div class="status-group status-right"><span class="status-label">HOLAT</span><strong id="state-value">TAYYOR</strong></div>
+      </div>
+      <div class="game-stage">
+        <div id="game-mount" aria-label="O‘yin maydoni"></div>
+        <div class="game-overlay" id="game-overlay">
+          <div class="overlay-panel">
+            <p class="game-kicker">BIR KECHALIK PATRUL</p>
+            <h2 id="overlay-title">Tungi navbatchi</h2>
+            <p id="overlay-copy">To‘r bilan binolar orasida tebran. 12 ta energiya belgisini yig‘ib, dronlardan qoch.</p>
+            <button class="start-button" id="start-button" type="button">O‘yinni boshlash <span>↗</span></button>
+          </div>
+        </div>
+        <div class="mobile-controls" aria-label="Sensorli boshqaruv">
+          <button type="button" data-control="left" aria-label="Chapga yurish">←</button>
+          <button type="button" data-control="right" aria-label="O‘ngga yurish">→</button>
+          <button type="button" data-control="jump" aria-label="Sakrash">SAKRASH</button>
+          <button type="button" data-control="web" aria-label="To‘r otish yoki uzish">TO‘R</button>
+        </div>
+      </div>
+      <div class="game-controls">
+        <span><kbd>A</kbd><kbd>D</kbd> HARAKAT</span>
+        <span><kbd>SPACE</kbd> SAKRASH</span>
+        <span><kbd>E</kbd> TO‘R OTISH / UZISH</span>
+        <span class="controls-note">YOKI EKRANGA TEGING</span>
+      </div>
+    </section>
+    <footer class="game-footer"><span>ORIGINAL ARCADE MINI-O‘YIN</span><span>HAR BIR TOMDA YANGI YO‘L</span></footer>
+  </main>
+</body>
+</html>
