@@ -1,0 +1,9 @@
+SHMI
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+data/platform.db
+data/platform.db-*
+data/students.json
+static/uploads/
