@@ -16,8 +16,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 ROOT = Path(__file__).resolve().parent
 DATABASE = ROOT / "data" / "platform.db"
+IS_VERCEL = bool(os.environ.get("VERCEL"))
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if os.environ.get("VERCEL") and not DATABASE_URL:
+if IS_VERCEL and not DATABASE_URL:
     raise RuntimeError("Set DATABASE_URL to the Neon PostgreSQL connection string.")
 SUBJECTS = ("Ingliz tili", "Matematika", "Tarix")
 SEED = {
@@ -38,15 +39,16 @@ SEED = {
     ),
 }
 
-app = Flask(__name__)
+STATIC_FOLDER = ROOT / "public" / "static" if IS_VERCEL else ROOT / "static"
+app = Flask(__name__, static_folder=str(STATIC_FOLDER), static_url_path="/static")
 secret_key = os.environ.get("SECRET_KEY")
-if os.environ.get("VERCEL") and not secret_key:
+if IS_VERCEL and not secret_key:
     raise RuntimeError("Set SECRET_KEY in the Vercel project environment variables.")
 app.secret_key = secret_key or secrets.token_hex(32)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=bool(os.environ.get("VERCEL")),
+    SESSION_COOKIE_SECURE=IS_VERCEL,
     MAX_CONTENT_LENGTH=5 * 1024 * 1024,
 )
 

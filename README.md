@@ -25,7 +25,7 @@ Internetga ommaviy joylashdan oldin `SECRET_KEY` muhit o‘zgaruvchisini belgila
 
 Flask ilovasi Vercel Python runtime’da ishlaydi; akkauntlar, ish e’lonlari, test natijalari va o‘quvchi rejasi doimiy Neon PostgreSQL bazasida saqlanadi. Vercel loyiha fayllar tizimi vaqtinchalik bo‘lgani uchun SQLite bazasi va yuklangan rasm fayllari u yerda ishlatilmaydi. Usta rasmlari uchun tashqi HTTPS rasm havolasidan foydalaning.
 
-1. GitHub’dagi `asadbey85-cell/ish-izla-bot` repozitoriysini Vercel’da **New Project** orqali import qiling; framework sifatida **Other** yoki avtomatik Python aniqlashni tanlang.
+1. GitHub’dagi `asadbey85-cell/ish-izla-bot` repozitoriysini Vercel’da **New Project** orqali import qiling; framework sifatida **Other** yoki avtomatik Python aniqlashni tanlang. `build.py` Vercel uchun `static/` fayllarini `public/static/` ichiga tayyorlaydi; ular CDN’dan beriladi.
 2. Vercel Marketplace’dan Neon PostgreSQL’ni ulang. Neon’dan olingan PostgreSQL connection string’ni Vercel Production environment’da `DATABASE_URL` nomi bilan saqlang. `DATABASE_URL` ichida TLS (`sslmode=require`) yoqilgan bo‘lishi kerak.
 3. Vercel **Environment Variables** bo‘limida `SECRET_KEY` nomli maxfiy qiymat yarating (kamida 32 tasodifiy bayt). Uni kodga yoki GitHub’ga yozmang.
 4. Loyihani deploy qiling. Dastur bazadagi jadvallarni birinchi ishga tushishda yaratadi; so‘ng `https://LOYIHA-NOMI.vercel.app/jobs` ochiladi. O‘quvchi rejasi `/planner` sahifasida.
