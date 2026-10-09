@@ -2,11 +2,9 @@
 <html lang="uz">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b2924">
   <title>{{ title|default('Ish izla bot') }} · Ish izla bot</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -18,7 +16,7 @@
       <a href="{{ url_for('game') }}">O‘yin</a>
       {% if current_user %}
         {% if current_user['role'] == 'admin' %}<a href="{{ url_for('admin') }}">Boshqaruv</a><a href="{{ url_for('cashier') }}">Kassa</a>
-        {% else %}<a href="{{ url_for('dashboard') }}">Fanlar</a><a href="{{ url_for('leaderboard') }}">Reyting</a>{% endif %}
+        {% else %}<a href="{{ url_for('dashboard') }}">Fanlar</a><a href="{{ url_for('planner') }}">Reja</a><a href="{{ url_for('leaderboard') }}">Reyting</a>{% endif %}
         <span class="nav-user">{{ current_user['username'] }}</span>
         <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="nav-button">Chiqish</button></form>
       {% endif %}
@@ -32,7 +30,7 @@
       <div class="auth-intro">
         <p class="eyebrow">{{ 'PLATFORMANI SOZLASH' if view == 'setup' else 'ISH IZLA BOT / JOBS' }}</p>
         <h1>{% if view == 'setup' %}Admin<br>akkaunti.{% elif view == 'register' %}Yangi hisob,<br>yangi imkon.{% else %}Ish izla bot<br>bilan ishlash.{% endif %}</h1>
-        <p class="intro-copy">Ishlar, ustalar va ish izlovchilar uchun qulay platforma. Ish izla bot вЂ“ tez, oson va ishonchli tanlov.</p>
+        <p class="intro-copy">Ishlar, ustalar va ish izlovchilar uchun qulay platforma. Ish izla bot — tez, oson va ishonchli tanlov.</p>
         <div class="subject-ribbon"><span>JOBS</span><span>USTA</span><span>BOT</span><i>3 IN 1</i></div>
       </div>
       <section class="auth-panel">
@@ -44,9 +42,9 @@
           <label>Login<input name="username" autocomplete="username" minlength="3" required></label>
           <label>Parol<input type="password" name="password" autocomplete="{{ 'current-password' if view == 'login' else 'new-password' }}" minlength="{{ 10 if view == 'setup' else 8 }}" required></label>
           {% if view != 'login' %}<label>Parolni qayta kiriting<input type="password" name="confirmation" autocomplete="new-password" required></label>{% endif %}
-          <button class="button dark" type="submit">{{ 'Admin yaratish' if view == 'setup' else ('RoвЂyxatdan oвЂtish' if view == 'register' else 'Kirish') }} <span>в†—</span></button>
+          <button class="button dark" type="submit">{{ 'Admin yaratish' if view == 'setup' else ('Ro‘yxatdan o‘tish' if view == 'register' else 'Kirish') }} <span>→</span></button>
         </form>
-        {% if view == 'login' %}<p class="switch-link">Akkauntingiz yoвЂqmi? <a href="{{ url_for('register') }}">RoвЂyxatdan oвЂting</a></p>{% elif view == 'register' %}<p class="switch-link">Akkauntingiz bormi? <a href="{{ url_for('login') }}">Login qiling</a></p>{% endif %}
+        {% if view == 'login' %}<p class="switch-link">Akkauntingiz yo‘qmi? <a href="{{ url_for('register') }}">Ro‘yxatdan o‘ting</a></p>{% elif view == 'register' %}<p class="switch-link">Akkauntingiz bormi? <a href="{{ url_for('login') }}">Login qiling</a></p>{% endif %}
       </section>
     </section>
 
@@ -96,37 +94,94 @@
     </section>
 
     {% elif view == 'dashboard' %}
-    <section class="page-heading"><div><p class="eyebrow">OвЂQUVCHI PANELI / {{ current_user['username'] }}</p><h1>Qaysi fan?</h1></div><a class="text-link" href="{{ url_for('leaderboard') }}">Reyting jadvali в†—</a></section>
-    <section class="subject-grid">{% for subject in subjects %}<a class="subject-tile tile-{{ loop.index }}" href="{{ url_for('quiz', subject=subject) }}"><span class="eyebrow">0{{ loop.index }} / FAN</span><h2>{{ subject }}</h2><div class="tile-foot"><span>{{ counts.get(subject, 0) }} ta savol</span><b>в†—</b></div></a>{% endfor %}</section>
-    <section class="recent"><p class="eyebrow">SOвЂNGGI FAOLLIK</p><h2>Test natijalari</h2>
+    <section class="page-heading"><div><p class="eyebrow">O‘QUVCHI PANELI / {{ current_user['username'] }}</p><h1>Qaysi fan?</h1></div><div class="result-links"><a class="text-link" href="{{ url_for('planner') }}">Dars va vazifalar rejasi →</a><a class="text-link" href="{{ url_for('leaderboard') }}">Reyting jadvali →</a></div></section>
+    <section class="subject-grid">{% for subject in subjects %}<a class="subject-tile tile-{{ loop.index }}" href="{{ url_for('quiz', subject=subject) }}"><span class="eyebrow">0{{ loop.index }} / FAN</span><h2>{{ subject }}</h2><div class="tile-foot"><span>{{ counts.get(subject, 0) }} ta savol</span><b>→</b></div></a>{% endfor %}</section>
+    <section class="recent"><p class="eyebrow">SO‘NGGI FAOLLIK</p><h2>Test natijalari</h2>
       {% if recent %}<div class="table-scroll"><table><thead><tr><th>Fan</th><th>Natija</th><th>Vaqt</th></tr></thead><tbody>{% for row in recent %}<tr><td>{{ row['subject'] }}</td><td>{{ row['score'] }} / {{ row['total'] }}</td><td>{{ row['created_at'] }}</td></tr>{% endfor %}</tbody></table></div>
-      {% else %}<p class="muted">Hozircha natija yoвЂq. Fan tanlab testingizni boshlang.</p>{% endif %}
+      {% else %}<p class="muted">Hozircha natija yo‘q. Fan tanlab testingizni boshlang.</p>{% endif %}
     </section>
 
-    {% elif view == 'quiz' %}
-    <section class="page-heading"><div><p class="eyebrow">TEST / {{ questions|length }} SAVOL</p><h1>{{ subject }}</h1></div><a class="text-link" href="{{ url_for('dashboard') }}">в†ђ Fanlarga qaytish</a></section>
+      {% elif view == 'planner' %}
+      <section class="page-heading"><div><p class="eyebrow">O‘QUVCHI REJASI / VAQTNI BOSHQARING</p><h1>Dars, vazifa,<br>maqsad.</h1></div><a class="text-link" href="{{ url_for('dashboard') }}">← Fanlarga qaytish</a></section>
+      <section class="planner-xp">
+        <div><p class="eyebrow">SIZNING TAJRIBANGIZ</p><strong>{{ xp }} XP</strong><p class="muted">Har bajarilgan vazifa uchun +10 XP</p></div>
+        <div class="xp-progress" aria-label="{{ xp_progress }} foiz XP"><span style="width: {{ xp_progress }}%"></span></div>
+        <div class="planner-rewards">{% for reward in rewards %}<span class="{{ 'reward-earned' if reward['unlocked'] else '' }}" title="{{ reward['xp'] }} XP">{{ '★' if reward['unlocked'] else '☆' }} {{ reward['name'] }}</span>{% endfor %}</div>
+      </section>
+      <section class="weekly-stats">
+        <article><span>BU HAFTADA</span><strong>{{ weekly_tasks }}</strong><small>bajarilgan vazifa</small></article>
+        <article><span>FOKUS VAQTI</span><strong>{{ weekly_focus }}<small> daq.</small></strong><small>shu haftada o‘qildi</small></article>
+        <article><span>TESTLAR</span><strong>{{ weekly_tests }}</strong><small>topshirilgan test</small></article>
+      </section>
+      <section class="planner-layout">
+        <div class="planner-column">
+          <form method="post" class="planner-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="add_task">
+            <p class="eyebrow">REJALASHTIRING</p><h2>Uy vazifasini qo‘shish</h2>
+            <label>Vazifa nomi<input name="title" maxlength="180" placeholder="Masalan: Matematika, 5-mashq" required></label>
+            <label>Fan<input name="subject" maxlength="100" placeholder="Masalan: Matematika" required></label>
+            <div class="planner-fields"><label>Muddati<input type="date" name="due_date"></label><label>Muhimligi<select name="priority"><option value="high">Muhim</option><option value="medium" selected>O‘rtacha</option><option value="low">Past</option></select></label></div>
+            <button class="button dark" type="submit">Vazifani qo‘shish <span>+</span></button>
+          </form>
+          <section class="planner-panel"><p class="eyebrow">VAZIFALAR / {{ tasks|length }} TA</p><h2>Uy vazifalari</h2>
+            {% for task in tasks %}<article class="planner-item {{ 'task-done' if task['completed'] else '' }}">
+              <div class="planner-item-main"><span class="priority priority-{{ task['priority'] }}">{{ priorities[task['priority']] }}</span><h3>{{ task['title'] }}</h3><p>{{ task['subject'] }}{% if task['due_date'] %} · Muddat: {{ task['due_date'] }}{% endif %}</p></div>
+              <div class="planner-item-actions">
+                {% if not task['completed'] %}<form method="post" action="{{ url_for('complete_planner_task', task_id=task['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="small-action" type="submit">Bajarildi +10 XP</button></form>{% else %}<span class="done-label">Bajarildi</span>{% endif %}
+                <form method="post" action="{{ url_for('delete_planner_item', item_type='task', item_id=task['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="small-action delete-action" type="submit" aria-label="Vazifani o‘chirish">O‘chirish</button></form>
+              </div>
+            </article>{% else %}<p class="muted">Hozircha vazifa yo‘q. Birinchi vazifangizni qo‘shing.</p>{% endfor %}
+          </section>
+          <section class="planner-panel"><p class="eyebrow">IMTIHONGACHA</p><h2>Imtihon sanalari</h2>
+            {% for exam in exams %}<article class="planner-item exam-item"><div class="planner-item-main"><h3>{{ exam['subject'] }}</h3><p>{{ exam['exam_date'] }}</p></div><strong class="exam-countdown">{% if exam['days_left'] == 0 %}Bugun!{% else %}{{ exam['days_left'] }} kun qoldi{% endif %}</strong><form method="post" action="{{ url_for('delete_planner_item', item_type='exam', item_id=exam['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="small-action delete-action" type="submit">O‘chirish</button></form></article>
+            {% else %}<p class="muted">Yaqin imtihonlar yo‘q.</p>{% endfor %}
+            <form method="post" class="planner-inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="add_exam">
+              <label>Fan<input name="exam_subject" maxlength="100" placeholder="Imtihon fani" required></label><label>Sana<input type="date" name="exam_date" min="{{ today }}" required></label><button class="button dark" type="submit">Imtihon qo‘shish <span>+</span></button>
+            </form>
+          </section>
+        </div>
+        <div class="planner-column">
+          <section class="planner-panel"><p class="eyebrow">HAFTALIK JADVAL</p><h2>Darslaringiz</h2>
+            {% for lesson in lessons %}<article class="lesson-row"><time>{{ lesson['start_time'] }}</time><div><strong>{{ lesson['subject'] }}</strong><small>{{ weekdays[lesson['weekday']] }}{% if lesson['location'] %} · {{ lesson['location'] }}{% endif %}</small></div><form method="post" action="{{ url_for('delete_planner_item', item_type='lesson', item_id=lesson['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="small-action delete-action" type="submit" aria-label="Darsni o‘chirish">×</button></form></article>
+            {% else %}<p class="muted">Jadval hozircha bo‘sh.</p>{% endfor %}
+            <form method="post" class="planner-form compact-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="add_lesson">
+              <label>Fan<input name="lesson_subject" maxlength="100" required></label>
+              <div class="planner-fields"><label>Hafta kuni<select name="weekday">{% for weekday in weekdays %}<option value="{{ loop.index0 }}">{{ weekday }}</option>{% endfor %}</select></label><label>Vaqt<input type="time" name="start_time" required></label></div>
+              <label>Xona yoki manzil (ixtiyoriy)<input name="location" maxlength="100"></label><button class="button dark" type="submit">Dars qo‘shish <span>+</span></button>
+            </form>
+          </section>
+          <section class="planner-panel focus-panel"><p class="eyebrow">DIQQATNI JAMLANG</p><h2>Fokus taymeri</h2><p class="muted">Taymer tugaganda o‘qish vaqti haftalik statistikaga qo‘shiladi.</p>
+            <form id="focus-form" method="post" action="{{ url_for('planner') }}" data-csrf="{{ csrf_token }}"><input type="hidden" name="action" value="focus"><input type="hidden" name="minutes" value="25"></form>
+            <label for="focus-duration">Mashg‘ulot davomiyligi<select id="focus-duration"><option value="15">15 daqiqa</option><option value="25" selected>25 daqiqa</option><option value="45">45 daqiqa</option></select></label>
+            <output id="focus-clock" class="focus-clock" aria-live="polite">25:00</output>
+            <div class="focus-actions"><button id="focus-start" class="button dark" type="button">Boshlash <span>▶</span></button><button id="focus-pause" class="button ghost" type="button" disabled>To‘xtatish</button><button id="focus-reset" class="button ghost" type="button">Qayta</button></div>
+          </section>
+        </div>
+      </section>
+
+      {% elif view == 'quiz' %}
+    <section class="page-heading"><div><p class="eyebrow">TEST / {{ questions|length }} SAVOL</p><h1>{{ subject }}</h1></div><a class="text-link" href="{{ url_for('dashboard') }}">← Fanlarga qaytish</a></section>
     <form method="post" class="quiz-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       {% for question in questions %}<fieldset class="question"><legend><span>{{ '%02d'|format(loop.index) }}</span>{{ question['prompt'] }}</legend><div class="answers">
         {% for option in [question['a'], question['b'], question['c'], question['d']] %}<label class="answer"><input type="radio" name="answer-{{ question['id'] }}" value="{{ loop.index0 }}" required><b>{{ ['A', 'B', 'C', 'D'][loop.index0] }}</b>{{ option }}</label>{% endfor %}
       </div></fieldset>{% endfor %}
-      <div class="quiz-submit"><span>{{ questions|length }} ta savol</span><button class="button dark" type="submit">Testni yakunlash <span>в†—</span></button></div>
+      <div class="quiz-submit"><span>{{ questions|length }} ta savol</span><button class="button dark" type="submit">Testni yakunlash <span>→</span></button></div>
     </form>
 
     {% elif view == 'result' %}
-    <section class="result-layout"><div class="score-block"><span>TEST YAKUNLANDI</span><strong>{{ '%02d'|format(percent) }}<small>%</small></strong><span>{{ result['score'] }} / {{ result['total'] }} TOвЂGвЂRI JAVOB</span></div><div><p class="eyebrow">{{ result['username'] }} / {{ result['subject'] }}</p><h1>Natijangiz<br>tayyor.</h1><p class="muted">{{ result['full_name'] }}, natijangiz reyting jadvaliga qoвЂshildi.</p><div class="result-links"><a class="button dark" href="{{ url_for('dashboard') }}">Yana test ishlash в†—</a><a class="text-link" href="{{ url_for('leaderboard') }}">Reytingni koвЂrish</a></div></div></section>
+    <section class="result-layout"><div class="score-block"><span>TEST YAKUNLANDI</span><strong>{{ '%02d'|format(percent) }}<small>%</small></strong><span>{{ result['score'] }} / {{ result['total'] }} TO‘G‘RI JAVOB</span></div><div><p class="eyebrow">{{ result['username'] }} / {{ result['subject'] }}</p><h1>Natijangiz<br>tayyor.</h1><p class="muted">{{ result['full_name'] }}, natijangiz reyting jadvaliga qo‘shildi.</p><div class="result-links"><a class="button dark" href="{{ url_for('dashboard') }}">Yana test ishlash →</a><a class="text-link" href="{{ url_for('leaderboard') }}">Reytingni ko‘rish</a></div></div></section>
 
     {% elif view == 'leaderboard' %}
-    <section class="page-heading"><div><p class="eyebrow">NATIJALAR / OвЂQUVCHILAR</p><h1>Reyting jadvali</h1></div>{% if current_user['role'] == 'student' %}<a class="text-link" href="{{ url_for('dashboard') }}">Fanlarga qaytish</a>{% endif %}</section>
-    <div class="table-scroll"><table><thead><tr><th>#</th><th>OвЂquvchi</th><th>Testlar</th><th>ToвЂgвЂri javob</th><th>OвЂrtacha</th></tr></thead><tbody>
-      {% for row in rows %}<tr class="{{ 'my-row' if current_user['id'] == row['id'] else '' }}"><td>{{ '%02d'|format(loop.index) }}</td><td><strong>{{ row['full_name'] }}</strong><small class="subline">@{{ row['username'] }}</small></td><td>{{ row['tests'] }}</td><td>{{ row['points'] }} / {{ row['total'] }}</td><td><strong>{{ (row['points'] * 100 / row['total'])|round|int }}%</strong></td></tr>{% else %}<tr><td colspan="5" class="muted">Hozircha natijalar yoвЂq.</td></tr>{% endfor %}
+    <section class="page-heading"><div><p class="eyebrow">NATIJALAR / O‘QUVCHILAR</p><h1>Reyting jadvali</h1></div>{% if current_user['role'] == 'student' %}<a class="text-link" href="{{ url_for('dashboard') }}">Fanlarga qaytish</a>{% endif %}</section>
+    <div class="table-scroll"><table><thead><tr><th>#</th><th>O‘quvchi</th><th>Testlar</th><th>To‘g‘ri javob</th><th>O‘rtacha</th></tr></thead><tbody>
+      {% for row in rows %}<tr class="{{ 'my-row' if current_user['id'] == row['id'] else '' }}"><td>{{ '%02d'|format(loop.index) }}</td><td><strong>{{ row['full_name'] }}</strong><small class="subline">@{{ row['username'] }}</small></td><td>{{ row['tests'] }}</td><td>{{ row['points'] }} / {{ row['total'] }}</td><td><strong>{{ (row['points'] * 100 / row['total'])|round|int }}%</strong></td></tr>{% else %}<tr><td colspan="5" class="muted">Hozircha natijalar yo‘q.</td></tr>{% endfor %}
     </tbody></table></div>
 
     {% elif view == 'jobs' %}
-    <section class="page-heading"><div><p class="eyebrow">ISHLAR / E'LONLAR</p><h1>Ish qidiruv va ish berish</h1></div><a class="text-link" href="{{ url_for('index') }}">Asosiy sahifa в†—</a></section>
+    <section class="page-heading"><div><p class="eyebrow">ISHLAR / E'LONLAR</p><h1>Ish qidiruv va ish berish</h1></div><a class="text-link" href="{{ url_for('index') }}">Asosiy sahifa →</a></section>
     <section class="jobs-layout">
       <form method="post" class="jobs-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <p class="eyebrow">ISH BERUVCHI</p>
-        <h2>Yangi ish eвЂ™lonini qoвЂshing</h2>
+        <h2>Yangi ish e’lonini qo‘shing</h2>
         <label>Ism / Firma<input name="employer_name" required></label>
         <label>Ish nomi<input name="title" required></label>
         <label>Turkum<select name="category"><option>Qurilish</option><option>Savdo</option><option>Ta'mirlash</option><option>Dasturlash</option><option>Transport</option><option>Boshqa</option></select></label>
@@ -135,17 +190,17 @@
         <label>Telefon raqami<input type="tel" name="phone" required></label>
         <label>Maosh<input name="salary" placeholder="Masalan: 2 500 000 so'm"></label>
         <label>Ish haqida<textarea name="description" rows="4" required></textarea></label>
-        <button class="button dark" type="submit" name="action" value="post_job">Ish eвЂ™lonini saqlash <span>в†—</span></button>
+        <button class="button dark" type="submit" name="action" value="post_job">Ish e’lonini saqlash <span>→</span></button>
       </form>
 
       <div class="jobs-panel">
         <form method="post" class="jobs-search"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <p class="eyebrow">ISH IZLOVCHI</p>
           <h2>Ish qidiring</h2>
-          <label>Qidiruv soвЂzi<input name="search_query" value="{{ query or '' }}" placeholder="Masalan: sotuvchi, quruvchi"></label>
+          <label>Qidiruv so‘zi<input name="search_query" value="{{ query or '' }}" placeholder="Masalan: sotuvchi, quruvchi"></label>
           <label>Qayerda<input name="search_location" value="{{ location or '' }}" placeholder="Toshkent, Samarkand"></label>
           <label>Turkum<select name="search_category"><option value="">Hammasi</option><option {% if category == 'Qurilish' %}selected{% endif %}>Qurilish</option><option {% if category == 'Savdo' %}selected{% endif %}>Savdo</option><option {% if category == 'Ta\'mirlash' %}selected{% endif %}>Ta'mirlash</option><option {% if category == 'Dasturlash' %}selected{% endif %}>Dasturlash</option><option {% if category == 'Transport' %}selected{% endif %}>Transport</option><option {% if category == 'Boshqa' %}selected{% endif %}>Boshqa</option></select></label>
-          <button class="button dark" type="submit">Qidirish <span>в†—</span></button>
+          <button class="button dark" type="submit">Qidirish <span>→</span></button>
         </form>
 
         <div class="job-list">
@@ -156,30 +211,30 @@
             <p class="job-company">{{ job['employer_name'] }}</p>
             <p>{{ job['description'] }}</p>
             <div class="job-meta">
-              <span>рџ“Ќ {{ job['location'] }}</span>
-              <span>рџ‘¤ {{ job['age'] }}</span>
+              <span>📍 {{ job['location'] }}</span>
+              <span>👤 {{ job['age'] }}</span>
             </div>
             <div class="job-contact">
-              <a href="tel:{{ job['phone'] }}">рџ“ћ {{ job['phone'] }}</a>
+              <a href="tel:{{ job['phone'] }}">📞 {{ job['phone'] }}</a>
             </div>
           </article>
           {% else %}
-          <p class="muted">Hozircha ishlar yoвЂq. Birinchi boвЂlib eвЂ™lon qoвЂshing.</p>
+          <p class="muted">Hozircha ishlar yo‘q. Birinchi bo‘lib e’lon qo‘shing.</p>
           {% endfor %}
         </div>
       </div>
     </section>
 
     {% elif view == 'cashier' %}
-    <section class="page-heading"><div><p class="eyebrow">KASSA / HISOBLAGICH</p><h1>Mahsulotlarni skanerdan kiriting</h1></div><a class="text-link" href="{{ url_for('admin') }}">Admin panel в†—</a></section>
+    <section class="page-heading"><div><p class="eyebrow">KASSA / HISOBLAGICH</p><h1>Mahsulotlarni skanerdan kiriting</h1></div><a class="text-link" href="{{ url_for('admin') }}">Admin panel →</a></section>
     <section class="cashier-layout">
       <div class="cashier-panel">
         <p class="eyebrow">QR / BARCODE</p>
-        <h2>Mahsulotni kod boвЂyicha qoвЂshish</h2>
+        <h2>Mahsulotni kod bo‘yicha qo‘shish</h2>
         <form method="post" class="cashier-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <label>Mahsulot kodi<input name="product_code" placeholder="Masalan: 1001" required></label>
           <label>Soni<input type="number" name="quantity" min="1" value="1" required></label>
-          <button class="button dark" type="submit" name="action" value="add_item">Mahsulot qoвЂshish <span>в†—</span></button>
+          <button class="button dark" type="submit" name="action" value="add_item">Mahsulot qo‘shish <span>→</span></button>
         </form>
 
         <div class="product-list">
@@ -189,7 +244,7 @@
               <strong>{{ product['name'] }}</strong>
               <small>{{ product['code'] }} · {{ product['stock'] }} dona</small>
             </div>
-            <span>{{ product['price'] }} soвЂm</span>
+            <span>{{ product['price'] }} so‘m</span>
           </div>
           {% endfor %}
         </div>
@@ -203,20 +258,20 @@
           <div class="cart-item">
             <div>
               <strong>{{ item['name'] }}</strong>
-              <small>{{ item['quantity'] }} Г— {{ item['price'] }} soвЂm</small>
+              <small>{{ item['quantity'] }} × {{ item['price'] }} so‘m</small>
             </div>
-            <span>{{ item['line_total'] }} soвЂm</span>
+            <span>{{ item['line_total'] }} so‘m</span>
           </div>
           {% endfor %}
         {% else %}
-          <p class="muted">Hozircha savat boвЂsh. Mahsulot kiriting.</p>
+          <p class="muted">Hozircha savat bo‘sh. Mahsulot kiriting.</p>
         {% endif %}
 
-        <div class="total-box"><span>Jami</span><strong>{{ cart_total }} soвЂm</strong></div>
+        <div class="total-box"><span>Jami</span><strong>{{ cart_total }} so‘m</strong></div>
 
         <form method="post" class="checkout-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <label>ToвЂlangan pul<input type="number" name="payment_amount" min="0" step="100" placeholder="Masalan: 50000" required></label>
-          <button class="button dark" type="submit" name="action" value="checkout">Hisoblash <span>в†—</span></button>
+          <label>To‘langan pul<input type="number" name="payment_amount" min="0" step="100" placeholder="Masalan: 50000" required></label>
+          <button class="button dark" type="submit" name="action" value="checkout">Hisoblash <span>→</span></button>
           <button class="button ghost" type="submit" name="action" value="clear_cart">Savatni tozalash</button>
           {% if last_receipt %}<a class="button ghost" href="{{ url_for('receipt') }}" target="_blank">Chekni chop etish</a>{% endif %}
         </form>
@@ -224,15 +279,15 @@
     </section>
 
     {% elif view == 'admin' %}
-    <section class="page-heading"><div><p class="eyebrow">ADMIN / {{ student_count }} OвЂQUVCHI</p><h1>Test boshqaruvi</h1></div><a class="text-link" href="{{ url_for('leaderboard') }}">Reyting в†—</a></section>
-    <section class="admin-layout"><form method="post" class="admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><p class="eyebrow">YANGI SAVOL</p><h2>Testga savol qoвЂshish</h2>
+    <section class="page-heading"><div><p class="eyebrow">ADMIN / {{ student_count }} O‘QUVCHI</p><h1>Test boshqaruvi</h1></div><a class="text-link" href="{{ url_for('leaderboard') }}">Reyting →</a></section>
+    <section class="admin-layout"><form method="post" class="admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><p class="eyebrow">YANGI SAVOL</p><h2>Testga savol qo‘shish</h2>
       <label>Fan<select name="subject">{% for subject in subjects %}<option>{{ subject }}</option>{% endfor %}</select></label><label>Savol<textarea name="prompt" rows="3" required></textarea></label>
       {% for letter in ['a', 'b', 'c', 'd'] %}<label>{{ letter|upper }} varianti<input name="option_{{ letter }}" required></label>{% endfor %}
-      <label>ToвЂgвЂri javob<select name="answer"><option value="0">A varianti</option><option value="1">B varianti</option><option value="2">C varianti</option><option value="3">D varianti</option></select></label><button class="button dark" type="submit">Savolni saqlash в†—</button>
+      <label>To‘g‘ri javob<select name="answer"><option value="0">A varianti</option><option value="1">B varianti</option><option value="2">C varianti</option><option value="3">D varianti</option></select></label><button class="button dark" type="submit">Savolni saqlash →</button>
     </form><section><p class="eyebrow">BAZA / {{ questions|length }} SAVOL</p>{% for question in questions %}<article class="question-row"><span>{{ question['subject'] }}</span><strong>{{ question['prompt'] }}</strong></article>{% else %}<p class="muted">Savollar topilmadi.</p>{% endfor %}</section></section>
     {% endif %}
   </main>
-  <footer class="footer"><span>BILIM MAYDONI</span><span>OвЂRGAN · SINAB KOвЂR · OвЂS</span></footer>
+  <footer class="footer"><span>BILIM MAYDONI</span><span>O‘RGAN · SINAB KO‘R · O‘S</span></footer>
+  {% if view == 'planner' %}<script src="{{ url_for('static', filename='planner.js') }}" defer></script>{% endif %}
 </body>
 </html>
-
