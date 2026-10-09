@@ -2,6 +2,8 @@
 
 Brauzerda ishlaydigan platforma: o‘quvchi akkaunti, Ingliz tili/Matematika/Tarix testlari, avtomatik natija, reyting va admin savol qo‘shish paneli. Usta katalogida ism, telefon, shahar/tuman, rasm, xizmatlar, tajriba va natijalarni e’lon qilish mumkin; mijozlar xizmat yoki joy bo‘yicha qidirib, ustaga bevosita qo‘ng‘iroq qiladi.
 
+O‘quvchi `/planner` sahifasida haftalik dars jadvali, muhimlik bo‘yicha saralangan uy vazifalari, imtihon sanalari, fokus taymeri, haftalik o‘qish statistikasi va XP mukofotlarini boshqaradi. Vazifa bajarilganda bir marta 10 XP beriladi; reja ma’lumotlari o‘quvchi akkauntiga bog‘langan holda SQLite bazasida saqlanadi.
+
 Usta rasmlari JPG, PNG yoki WEBP formatida, 5 MB gacha yuklanadi va `static/uploads/` ichida saqlanadi. Yuklangan rasmlar foydalanuvchi ma’lumoti hisoblanadi va Git orqali ulashilmaydi.
 
 ## Tungi navbatchi o‘yini
@@ -18,3 +20,38 @@ python app.py
 Sayt `http://127.0.0.1:5000` manzilida ochiladi. Birinchi kirishda admin akkaunti yaratiladi. O‘quvchilar `Ro‘yxatdan o‘tish` orqali akkaunt ochadi. Ma’lumotlar `data/platform.db` SQLite faylida saqlanadi.
 
 Internetga ommaviy joylashdan oldin `SECRET_KEY` muhit o‘zgaruvchisini belgilang va HTTPS hamda ishlab chiqarish serveridan foydalaning. `main.py` avvalgi konsol dasturi sifatida qoldirilgan.
+
+## Bepul onlayn joylash (PythonAnywhere)
+
+PythonAnywhere bepul hisobida bitta web-ilova bor. Bepul rejaning CPU (kuniga 100 soniya), disk (512 MB) va tashqi internet cheklovlari mavjud; past trafikdagi sayt ishlashi mumkin, lekin tashqi CDN rasmlari yoki o‘yin yuklanmasligi mumkin. Sayt kompyuteringiz o‘chiq bo‘lsa ham `https://FOYDALANUVCHI.pythonanywhere.com/jobs` manzilida ishlaydi.
+
+1. [PythonAnywhere Beginner hisobini](https://www.pythonanywhere.com/registration/register/beginner/) oching.
+2. Loyihaning ildiz papkasida PowerShell’ga quyidagini kiriting. Arxiv `data` ichidagi SQLite bazasini ham o‘z ichiga oladi:
+
+	```powershell
+	Compress-Archive -Path app.py,wsgi.py,requirements.txt,templates,static,data -DestinationPath ish-izla.zip -Force
+	```
+
+3. PythonAnywhere’dagi **Files** sahifasidan `ish-izla.zip` arxivini yuklang. **Consoles** sahifasida Bash konsoli ochib, arxivni oching va Flask’ni o‘rnating:
+
+	```bash
+	mkdir -p ~/ish-izla
+	unzip ~/ish-izla.zip -d ~/ish-izla
+	mkvirtualenv --python=/usr/bin/python3.13 ish-izla
+	pip install -r ~/ish-izla/requirements.txt
+	```
+
+4. **Web** sahifasida yangi web app yarating: **Manual configuration** va Python 3.13 ni tanlang. Virtualenv maydoniga `/home/FOYDALANUVCHI/.virtualenvs/ish-izla` ni kiriting.
+5. Web sahifasidagi WSGI konfiguratsiya faylini ochib, Flask bo‘limini quyidagiga almashtiring. `FOYDALANUVCHI` o‘rniga PythonAnywhere foydalanuvchi nomingizni yozing:
+
+	```python
+	import sys
+	project_home = "/home/FOYDALANUVCHI/ish-izla"
+	if project_home not in sys.path:
+		 sys.path.insert(0, project_home)
+	from wsgi import application
+	```
+
+6. **Web** sahifasida **Reload** ni bosing. Sayt `https://FOYDALANUVCHI.pythonanywhere.com/jobs` manzilida ochiladi. `platform.db` loyiha ichidagi `data` papkasida saqlanadi; kodni keyin qayta yuklaganda mavjud bazani o‘chirib yubormang.
+
+PythonAnywhere rejasi va cheklovlari o‘zgarishi mumkin; hisob ochishda bepul reja tafsilotlarini tekshiring. Parolingizni hech kimga yubormang.

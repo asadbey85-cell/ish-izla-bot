@@ -2,6 +2,7 @@ import hmac
 import os
 import secrets
 import sqlite3
+from datetime import date, datetime, timedelta
 from functools import wraps
 from pathlib import Path
 
@@ -132,6 +133,41 @@ def initialize():
             stock INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS planner_tasks (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            due_date TEXT,
+            priority TEXT NOT NULL CHECK(priority IN ('low', 'medium', 'high')),
+            completed INTEGER NOT NULL DEFAULT 0 CHECK(completed IN (0, 1)),
+            completed_at TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS planner_lessons (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            subject TEXT NOT NULL,
+            weekday INTEGER NOT NULL CHECK(weekday BETWEEN 0 AND 6),
+            start_time TEXT NOT NULL,
+            location TEXT NOT NULL DEFAULT ''
+        );
+        CREATE TABLE IF NOT EXISTS planner_exams (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            subject TEXT NOT NULL,
+            exam_date TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS planner_focus_sessions (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            minutes INTEGER NOT NULL CHECK(minutes BETWEEN 1 AND 120),
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS student_progress (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            xp INTEGER NOT NULL DEFAULT 0
+        );
         """
     )
     for subject, items in SEED.items():
@@ -203,6 +239,16 @@ def admin_required(view):
     @login_required
     def wrapped(*args, **kwargs):
         if g.user["role"] != "admin":
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def student_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if g.user["role"] != "student":
             abort(403)
         return view(*args, **kwargs)
     return wrapped
@@ -392,6 +438,211 @@ def dashboard():
         (g.user["id"],),
     ).fetchall()
     return render_template("index.html", view="dashboard", subjects=SUBJECTS, counts=counts, recent=recent)
+
+
+@app.route("/planner", methods=["GET", "POST"])
+@student_required
+def planner():
+    connection = db()
+    user_id = g.user["id"]
+    today = date.today()
+    connection.execute(
+        "INSERT OR IGNORE INTO student_progress (user_id) VALUES (?)", (user_id,)
+    )
+    connection.commit()
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "add_task":
+            title = request.form.get("title", "").strip()
+            subject = request.form.get("subject", "").strip()
+            due_date = request.form.get("due_date", "").strip() or None
+            priority = request.form.get("priority", "medium")
+            valid_date = True
+            if due_date:
+                try:
+                    date.fromisoformat(due_date)
+                except ValueError:
+                    valid_date = False
+            if not title or not subject or priority not in {"low", "medium", "high"} or not valid_date:
+                flash("Vazifa nomi, fan, muhimlik va sanani to‘g‘ri kiriting.", "error")
+            else:
+                connection.execute(
+                    "INSERT INTO planner_tasks (user_id, title, subject, due_date, priority) VALUES (?, ?, ?, ?, ?)",
+                    (user_id, title, subject, due_date, priority),
+                )
+                connection.commit()
+                flash("Uy vazifasi rejaga qo‘shildi.", "success")
+
+        elif action == "add_lesson":
+            subject = request.form.get("lesson_subject", "").strip()
+            location = request.form.get("location", "").strip()
+            try:
+                weekday = int(request.form.get("weekday", "-1"))
+                start_time = datetime.strptime(
+                    request.form.get("start_time", "").strip(), "%H:%M"
+                ).strftime("%H:%M")
+            except ValueError:
+                weekday = -1
+                start_time = ""
+            if not subject or not 0 <= weekday <= 6 or not start_time:
+                flash("Dars fani, hafta kuni va vaqtini to‘g‘ri kiriting.", "error")
+            else:
+                connection.execute(
+                    "INSERT INTO planner_lessons (user_id, subject, weekday, start_time, location) VALUES (?, ?, ?, ?, ?)",
+                    (user_id, subject, weekday, start_time, location),
+                )
+                connection.commit()
+                flash("Dars jadvalga qo‘shildi.", "success")
+
+        elif action == "add_exam":
+            subject = request.form.get("exam_subject", "").strip()
+            exam_date = request.form.get("exam_date", "").strip()
+            try:
+                valid_date = date.fromisoformat(exam_date) >= today
+            except ValueError:
+                valid_date = False
+            if not subject or not valid_date:
+                flash("Imtihon fani va sanasini to‘g‘ri kiriting.", "error")
+            else:
+                connection.execute(
+                    "INSERT INTO planner_exams (user_id, subject, exam_date) VALUES (?, ?, ?)",
+                    (user_id, subject, exam_date),
+                )
+                connection.commit()
+                flash("Imtihon sanasi saqlandi.", "success")
+
+        elif action == "focus":
+            try:
+                minutes = int(request.form.get("minutes", "0"))
+            except ValueError:
+                minutes = 0
+            if not 1 <= minutes <= 120:
+                flash("Fokus vaqti 1 dan 120 daqiqagacha bo‘lishi kerak.", "error")
+            else:
+                connection.execute(
+                    "INSERT INTO planner_focus_sessions (user_id, minutes) VALUES (?, ?)",
+                    (user_id, minutes),
+                )
+                connection.commit()
+                flash(f"{minutes} daqiqalik fokus mashg‘uloti qayd etildi.", "success")
+        else:
+            abort(400)
+        return redirect(url_for("planner"))
+
+    week_start = today - timedelta(days=today.weekday())
+    lessons = connection.execute(
+        "SELECT * FROM planner_lessons WHERE user_id = ? ORDER BY weekday, start_time",
+        (user_id,),
+    ).fetchall()
+    tasks = connection.execute(
+        """SELECT * FROM planner_tasks WHERE user_id = ?
+           ORDER BY completed, CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+                    due_date IS NULL, due_date, id DESC""",
+        (user_id,),
+    ).fetchall()
+    exams = []
+    for row in connection.execute(
+        "SELECT * FROM planner_exams WHERE user_id = ? AND exam_date >= ? ORDER BY exam_date, id",
+        (user_id, today.isoformat()),
+    ).fetchall():
+        exam = dict(row)
+        exam["days_left"] = (date.fromisoformat(exam["exam_date"]) - today).days
+        exams.append(exam)
+    progress = connection.execute(
+        "SELECT xp FROM student_progress WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    weekly_tasks = connection.execute(
+        """SELECT COUNT(*) FROM planner_tasks
+           WHERE user_id = ? AND completed = 1 AND date(completed_at) >= ?""",
+        (user_id, week_start.isoformat()),
+    ).fetchone()[0]
+    weekly_focus = connection.execute(
+        """SELECT COALESCE(SUM(minutes), 0) FROM planner_focus_sessions
+           WHERE user_id = ? AND date(created_at) >= ?""",
+        (user_id, week_start.isoformat()),
+    ).fetchone()[0]
+    weekly_tests = connection.execute(
+        """SELECT COUNT(*) FROM results
+           WHERE user_id = ? AND date(created_at) >= ?""",
+        (user_id, week_start.isoformat()),
+    ).fetchone()[0]
+    xp = progress["xp"]
+    rewards = [
+        {"name": "Birinchi qadam", "xp": 10, "unlocked": xp >= 10},
+        {"name": "Faol o‘quvchi", "xp": 50, "unlocked": xp >= 50},
+        {"name": "Maqsad sari", "xp": 100, "unlocked": xp >= 100},
+        {"name": "Bilim chempioni", "xp": 250, "unlocked": xp >= 250},
+    ]
+    return render_template(
+        "index.html",
+        view="planner",
+        title="O‘quvchi rejasi",
+        lessons=lessons,
+        tasks=tasks,
+        exams=exams,
+        weekdays=("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"),
+        priorities={"high": "Muhim", "medium": "O‘rtacha", "low": "Past"},
+        xp=xp,
+        xp_progress=xp % 100,
+        rewards=rewards,
+        weekly_tasks=weekly_tasks,
+        weekly_focus=weekly_focus,
+        weekly_tests=weekly_tests,
+        today=today.isoformat(),
+    )
+
+
+@app.route("/planner/task/<int:task_id>/complete", methods=["POST"])
+@student_required
+def complete_planner_task(task_id):
+    connection = db()
+    user_id = g.user["id"]
+    cursor = connection.execute(
+        """UPDATE planner_tasks SET completed = 1, completed_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ? AND completed = 0""",
+        (task_id, user_id),
+    )
+    if cursor.rowcount:
+        connection.execute(
+            "INSERT OR IGNORE INTO student_progress (user_id) VALUES (?)", (user_id,)
+        )
+        connection.execute(
+            "UPDATE student_progress SET xp = xp + 10 WHERE user_id = ?", (user_id,)
+        )
+        connection.commit()
+        flash("Vazifa bajarildi: +10 XP!", "success")
+    else:
+        task = connection.execute(
+            "SELECT completed FROM planner_tasks WHERE id = ? AND user_id = ?",
+            (task_id, user_id),
+        ).fetchone()
+        if task is None:
+            abort(404)
+        flash("Bu vazifa avval bajarilgan.", "error")
+    return redirect(url_for("planner"))
+
+
+@app.route("/planner/<string:item_type>/<int:item_id>/delete", methods=["POST"])
+@student_required
+def delete_planner_item(item_type, item_id):
+    tables = {
+        "task": "planner_tasks",
+        "lesson": "planner_lessons",
+        "exam": "planner_exams",
+    }
+    table = tables.get(item_type)
+    if table is None:
+        abort(404)
+    cursor = db().execute(
+        f"DELETE FROM {table} WHERE id = ? AND user_id = ?",
+        (item_id, g.user["id"]),
+    )
+    if cursor.rowcount == 0:
+        abort(404)
+    db().commit()
+    flash("Rejadagi ma’lumot o‘chirildi.", "success")
+    return redirect(url_for("planner"))
 
 
 @app.route("/quiz/<subject>", methods=["GET", "POST"])
