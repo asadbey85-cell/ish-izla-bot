@@ -52,6 +52,8 @@ PythonAnywhere bepul hisobida bitta web-ilova bor. Bepul rejaning CPU (kuniga 10
 	from wsgi import application
 	```
 
-6. **Web** sahifasida **Reload** ni bosing. Sayt `https://FOYDALANUVCHI.pythonanywhere.com/jobs` manzilida ochiladi. `platform.db` loyiha ichidagi `data` papkasida saqlanadi; kodni keyin qayta yuklaganda mavjud bazani o‘chirib yubormang.
+6. Web sahifasidagi **Environment variables** bo‘limida `SECRET_KEY` ni uzun, tasodifiy qiymat bilan belgilang. Bu qiymatni GitHub’ga yuklamang.
+7. **Web** sahifasida **Reload** ni bosing. Sayt `https://FOYDALANUVCHI.pythonanywhere.com/jobs` manzilida ochiladi. `platform.db` loyiha ichidagi `data` papkasida saqlanadi; kodni keyin qayta yuklaganda mavjud bazani o‘chirib yubormang.
+8. Birinchi marta saytni ochganda admin akkauntini yarating. O‘quvchi hisoblari `/register` sahifasida ochiladi; reja paneli `/planner` manzilida.
 
 PythonAnywhere rejasi va cheklovlari o‘zgarishi mumkin; hisob ochishda bepul reja tafsilotlarini tekshiring. Parolingizni hech kimga yubormang.
